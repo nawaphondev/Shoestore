@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// enum UserType {
+//   CUSTOMER
+//   ADMIN
+// }
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Customer {
+  id          Int        @id @default(autoincrement())
+  name        String
+  lastName    String
+  email       String
+  address     String
+  phone       String?
+  username    String     @unique
+  password    String
+  // userType    UserType
+  orders      Order[]
+  addresses   Address[]
+  oderItem    OrderItem? @relation(fields: [orderItemId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  orderItemId Int?
+}
+
+model Address {
+  id            Int      @id @default(autoincrement())
+  customerID    Int
+  recipientName String
+  phoneNumber   String
+  streetAddress String
+  city          String
+  state         String
+  postalCode    String
+  Customer      Customer @relation(fields: [customerID], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  customerID    Int
+  orderDate     DateTime
+  totalAmount   Float
+  paymentMethod String
+  Customer      Customer    @relation(fields: [customerID], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  orderItems    OrderItem[]
+  Payment       Payment?
+}
+
+model OrderItem {
+  id        Int        @id @default(autoincrement())
+  orderID   Int
+  ProductID Int
+  subtotal  Float
+  quantity  Int
+  Order     Order      @relation(fields: [orderID], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Product   Product    @relation(fields: [ProductID], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Customer  Customer[]
+}
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  orderID     Int           @unique
+  paymentDate DateTime
+  amount      Float
+  status      PaymentStatus @default(value: PENDING)
+  Order       Order         @relation(fields: [orderID], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  brand       String
+  description String?
+  productImg  String
+  category    String
+  size        String
+  color       String
+  price       Float
+  stock       Int
+  orderItems  OrderItem[]
+}
